@@ -107,6 +107,17 @@ local function CreateCraftsmanFrame()
     updateTimeText:SetPoint("BOTTOMRIGHT", -15, 7)
 
     ---------------------------------------------------------------------
+    -- link
+    ---------------------------------------------------------------------
+    local linkEditbox = CreateFrame("EditBox", nil, craftsmanFrame)
+    linkEditbox:SetFontObject("BFC_FONT_WHITE")
+    linkEditbox:SetPoint("LEFT", bottomInfoText, "RIGHT", 10, 0)
+    linkEditbox:SetPoint("RIGHT", updateTimeText, "LEFT", -10, 0)
+    linkEditbox:SetHeight(20)
+    linkEditbox:SetTextColor(0.6, 0.6, 0.6, 1)
+    linkEditbox:SetText("https://wow.miaoyanai.com/?ref=bigfoot")
+
+    ---------------------------------------------------------------------
     -- frame container
     ---------------------------------------------------------------------
     local scrollContainer = CreateFrame("Frame", "BFC_MainFrameContainer", craftsmanFrame)
