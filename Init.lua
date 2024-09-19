@@ -68,11 +68,21 @@ function eventFrame.ADDON_LOADED(name)
 
     elseif name == "Blizzard_ProfessionsCustomerOrders" then
         eventFrame:UnregisterEvent("ADDON_LOADED")
-        local button = CreateFrame("Button", "BFC_SearchCraftsmanButton", ProfessionsCustomerOrdersFrame.Form, "UIPanelButtonTemplate")
-        button:SetPoint("BOTTOMRIGHT", ProfessionsCustomerOrdersFrame.Form, "TOPRIGHT", 0, 5)
-        button:SetSize(100, 22)
-        button:SetText("查询工匠")
-        button:SetScript("OnClick", function()
+        -- order browsing
+        local button1 = CreateFrame("Button", "BFC_SearchCraftsmanButton", ProfessionsCustomerOrdersFrame.BrowseOrders, "UIPanelButtonTemplate")
+        button1:SetPoint("TOPLEFT", ProfessionsCustomerOrdersFrame.BrowseOrders, 70, -38)
+        button1:SetSize(100, 22)
+        button1:SetText("工匠列表")
+        button1:SetScript("OnClick", function()
+            BFC.ShowMainFrame()
+        end)
+
+        -- order form
+        local button2 = CreateFrame("Button", "BFC_SearchCraftsmanButton", ProfessionsCustomerOrdersFrame.Form, "UIPanelButtonTemplate")
+        button2:SetPoint("BOTTOMRIGHT", ProfessionsCustomerOrdersFrame.Form, "TOPRIGHT", 0, 5)
+        button2:SetSize(100, 22)
+        button2:SetText("查询工匠")
+        button2:SetScript("OnClick", function()
             BFC.ShowMainFrame()
             BFC.ShowCraftsmanFrame(ProfessionsCustomerOrdersFrame.Form.RecipeName:GetText())
         end)
