@@ -5,6 +5,135 @@ local PAD = 2
 local SPACING = 2
 local ATTIC_HEIGHT = 90
 
+---------------------------------------------------------------------
+-- comparator
+---------------------------------------------------------------------
+local function SortComparator(a, b)
+    if a.isFavorite ~= b.isFavorite then
+        return a.isFavorite
+    end
+    return a.createTime > b.createTime
+end
+
+---------------------------------------------------------------------
+-- factory
+---------------------------------------------------------------------
+local function ElementFactory(factory, elementData)
+    factory("CraftsmanButtonTemplate", function(button, elementData)
+        elementData.playerFull = elementData.player .. "-" .. elementData.server
+        elementData.isFavorite = BFCCraftsman.favorites[elementData.playerFull]
+        button:UpdateText(elementData)
+        button:UpdateFavoriteButton()
+
+        button:SetScript("OnClick", function(button, buttonName, down)
+            if buttonName == "LeftButton" then
+                BFC.ShowMessageFrame(elementData.player, elementData.playerFull)
+            end
+        end)
+    end)
+end
+
+---------------------------------------------------------------------
+-- list
+---------------------------------------------------------------------
+local function CreateList(parent, name)
+    local list = CreateFrame("ScrollFrame", name, parent, "WowScrollBoxList")
+    list:SetPoint("TOPLEFT")
+    list:SetPoint("BOTTOMRIGHT", -20, 2)
+
+    list.scrollBar = CreateFrame("EventFrame", nil, parent, "MinimalScrollBar")
+    list.scrollBar:SetPoint("TOPLEFT", list, "TOPRIGHT", 5, 0)
+    list.scrollBar:SetPoint("BOTTOMLEFT", list, "BOTTOMRIGHT", 5, 0)
+
+    list.dataProvider = CreateDataProvider()
+    list.dataProvider:SetSortComparator(SortComparator)
+
+    list.view = CreateScrollBoxListLinearView()
+    list.view :SetElementFactory(ElementFactory)
+    list.view :SetPadding(PAD, PAD, PAD, PAD, SPACING)
+
+    ScrollUtil.InitScrollBoxListWithScrollBar(list, list.scrollBar, list.view)
+    list:SetDataProvider(list.dataProvider)
+
+    return list
+end
+
+---------------------------------------------------------------------
+-- CraftsmanButtonMixin
+---------------------------------------------------------------------
+CraftsmanButtonMixin = {}
+
+function CraftsmanButtonMixin:OnLoad()
+    self.FavoriteButton:SetScript("OnEnter", function()
+        self:OnEnter()
+    end)
+
+    self.FavoriteButton:SetScript("OnLeave", function()
+        self:OnLeave()
+    end)
+
+    self.FavoriteButton:SetScript("OnClick", function()
+        self:GetData().isFavorite = not self:GetData().isFavorite
+        -- update BFCCraftsman.favorites
+        if self:GetData().isFavorite then
+            BFCCraftsman.favorites[self:GetData().playerFull] = true
+        else
+            BFCCraftsman.favorites[self:GetData().playerFull] = nil
+        end
+
+        -- update list
+        for index, elementData in normalList.dataProvider:Enumerate() do
+            elementData.isFavorite = BFCCraftsman.favorites[elementData.playerFull]
+            local button = normalList.view:FindFrame(elementData)
+            if button then
+                button:UpdateFavoriteButton()
+            end
+        end
+        for index, elementData in searchList.dataProvider:Enumerate() do
+            elementData.isFavorite = BFCCraftsman.favorites[elementData.playerFull]
+            local button = searchList.view:FindFrame(elementData)
+            if button then
+                button:UpdateFavoriteButton()
+            end
+        end
+    end)
+end
+
+function CraftsmanButtonMixin:OnEnter()
+    self.MouseoverOverlay:Show()
+    self.FavoriteButton.NormalTexture:Show()
+end
+
+function CraftsmanButtonMixin:OnLeave()
+    self.MouseoverOverlay:Hide()
+    if not self:GetData().isFavorite then
+        self.FavoriteButton.NormalTexture:Hide()
+    end
+end
+
+function CraftsmanButtonMixin:UpdateFavoriteButton()
+    local isFavorite = self:GetData().isFavorite
+    local currAtlas = isFavorite and "auctionhouse-icon-favorite" or "auctionhouse-icon-favorite-off"
+    self.FavoriteButton.NormalTexture:SetAtlas(currAtlas)
+    self.FavoriteButton.NormalTexture:SetShown(isFavorite)
+    self.FavoriteButton.HighlightTexture:SetAtlas(currAtlas)
+    self.FavoriteButton.HighlightTexture:SetAlpha(isFavorite and 0.2 or 0.4)
+end
+
+function CraftsmanButtonMixin:UpdateText(elementData)
+    self.TitleLabel:SetText(elementData.title)
+    self.PriceLabel:SetText(elementData.price .. "|A:Coin-Gold:0:0|a")
+    self.PlayerLabel:SetText(elementData.player)
+    self:UpdateFavoriteButton()
+end
+
+
+
+
+
+---------------------------------------------------------------------
+-- craftsman frame
+---------------------------------------------------------------------
 local isSearch = false
 local listUpdateRequired = true
 local listEntries, searchEntries = 0, 0
@@ -13,12 +142,11 @@ local categoryFilter, matchedResult
 local LoadData
 
 ---------------------------------------------------------------------
--- craftsman frame
+-- create craftsman frame
 ---------------------------------------------------------------------
 local craftsmanFrame
-local searchBox, topInfoText, updateTimeText, maskFrame
-local listScrollBox, listScrollBar, searchScrollBox, searchScrollBar
-local listDataProvider, searchDataProvider
+local categoryDropdown, searchBox, topInfoText, updateTimeText, maskFrame
+local normalList, searchList
 
 local function CreateCraftsmanFrame()
     craftsmanFrame = CreateFrame("Frame", "BFC_CraftsmanFrame", BFC_MainFrame)
@@ -45,13 +173,58 @@ local function CreateCraftsmanFrame()
     -- update time
     ---------------------------------------------------------------------
     updateTimeText = craftsmanFrame:CreateFontString(nil, "OVERLAY", "BFC_FONT_WHITE")
+    updateTimeText:SetPoint("BOTTOMRIGHT", -15, 7)
 
     ---------------------------------------------------------------------
+    -- frame container
+    ---------------------------------------------------------------------
+    local scrollContainer = CreateFrame("Frame", "BFC_MainFrameContainer", craftsmanFrame)
+    scrollContainer:SetPoint("TOPLEFT", 15, -ATTIC_HEIGHT-5)
+    scrollContainer:SetPoint("BOTTOMRIGHT", -11, 32)
+
+    -- scrollContainer.bg = scrollContainer:CreateTexture(nil, "ARTWORK")
+    -- scrollContainer.bg:SetAllPoints(scrollContainer)
+    -- scrollContainer.bg:SetColorTexture(0.03, 0.03, 0.03, 1)
+
+    ---------------------------------------------------------------------
+    -- mask
+    ---------------------------------------------------------------------
+    maskFrame = CreateFrame("Frame", nil, craftsmanFrame)
+    maskFrame:EnableMouse(true)
+    maskFrame:SetFrameLevel(craftsmanFrame:GetFrameLevel() + 100)
+    maskFrame:SetAllPoints(scrollContainer)
+    maskFrame:Hide()
+
+    maskFrame.texture = maskFrame:CreateTexture(nil, "ARTWORK")
+    maskFrame.texture:SetAllPoints()
+    maskFrame.texture:SetColorTexture(0.15, 0.15, 0.15, 0.9)
+
+    maskFrame.text = maskFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    maskFrame.text:SetPoint("LEFT", 10, 0)
+    maskFrame.text:SetPoint("RIGHT", -10, 0)
+    maskFrame.text:SetJustifyH("CENTER")
+    maskFrame.text:SetJustifyV("MIDDLE")
+    maskFrame.text:SetSpacing(7)
+
+    function maskFrame.FadeOut()
+        UIFrameFadeOut(maskFrame, 0.25, 1, 0)
+        C_Timer.After(0.25, function()
+            maskFrame:Hide()
+        end)
+    end
+
+    ---------------------------------------------------------------------
+    -- list
+    ---------------------------------------------------------------------
+    normalList = CreateList(scrollContainer, "BFC_CraftsmanNormalList")
+    searchList = CreateList(scrollContainer, "BFC_CraftsmanSearchList")
+
+        ---------------------------------------------------------------------
     -- category
     ---------------------------------------------------------------------
     local ALL = _G.ALL
 
-    local categoryDropdown = CreateFrame("DropdownButton", "BFC_CategoryDropdown", craftsmanFrame, "WowStyle1DropdownTemplate")
+    categoryDropdown = CreateFrame("DropdownButton", "BFC_CategoryDropdown", craftsmanFrame, "WowStyle1DropdownTemplate")
     categoryDropdown:SetWidth(150)
     categoryDropdown:SetHeight(25)
     categoryDropdown:SetPoint("TOPLEFT", 15, -35)
@@ -131,10 +304,10 @@ local function CreateCraftsmanFrame()
         local text = searchBox:GetText()
         if string.len(text) == 0 then
             isSearch = false
-            listScrollBox:Show()
-            listScrollBar:Show()
-            searchScrollBox:Hide()
-            searchScrollBar:Hide()
+            normalList:Show()
+            normalList.scrollBar:Show()
+            searchList:Hide()
+            searchList.scrollBar:Hide()
             if listUpdateRequired then
                 listUpdateRequired = false
                 LoadData()
@@ -144,10 +317,10 @@ local function CreateCraftsmanFrame()
         else
             isSearch = true
             dropdownChangedBySearch = false
-            searchScrollBox:Show()
-            searchScrollBar:Show()
-            listScrollBox:Hide()
-            listScrollBar:Hide()
+            searchList:Show()
+            searchList.scrollBar:Show()
+            normalList:Hide()
+            normalList.scrollBar:Hide()
             if userChanged then
                 LoadData(strtrim(text))
             end
@@ -159,122 +332,10 @@ local function CreateCraftsmanFrame()
     searchBox:SetHeight(25)
 
     ---------------------------------------------------------------------
-    -- frame container
-    ---------------------------------------------------------------------
-    local scrollContainer = CreateFrame("Frame", "BFC_MainFrameContainer", craftsmanFrame)
-    scrollContainer:SetPoint("TOPLEFT", 15, -ATTIC_HEIGHT-5)
-    scrollContainer:SetPoint("BOTTOMRIGHT", -11, 32)
-
-    -- scrollContainer.bg = scrollContainer:CreateTexture(nil, "ARTWORK")
-    -- scrollContainer.bg:SetAllPoints(scrollContainer)
-    -- scrollContainer.bg:SetColorTexture(0.03, 0.03, 0.03, 1)
-
-    ---------------------------------------------------------------------
-    -- mask
-    ---------------------------------------------------------------------
-    maskFrame = CreateFrame("Frame", nil, craftsmanFrame)
-    maskFrame:EnableMouse(true)
-    maskFrame:SetFrameLevel(craftsmanFrame:GetFrameLevel() + 100)
-    maskFrame:SetAllPoints(scrollContainer)
-    maskFrame:Hide()
-
-    maskFrame.texture = maskFrame:CreateTexture(nil, "ARTWORK")
-    maskFrame.texture:SetAllPoints()
-    maskFrame.texture:SetColorTexture(0.15, 0.15, 0.15, 0.9)
-
-    maskFrame.text = maskFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    maskFrame.text:SetPoint("LEFT", 10, 0)
-    maskFrame.text:SetPoint("RIGHT", -10, 0)
-    maskFrame.text:SetJustifyH("CENTER")
-    maskFrame.text:SetJustifyV("MIDDLE")
-    maskFrame.text:SetSpacing(7)
-
-    function maskFrame.FadeOut()
-        UIFrameFadeOut(maskFrame, 0.25, 1, 0)
-        C_Timer.After(0.25, function()
-            maskFrame:Hide()
-        end)
-    end
-
-    ---------------------------------------------------------------------
-    -- list
-    ---------------------------------------------------------------------
-    listScrollBox = CreateFrame("ScrollFrame", "BFC_ListScrollFrame", scrollContainer, "WowScrollBoxList")
-    listScrollBox:SetPoint("TOPLEFT")
-    listScrollBox:SetPoint("BOTTOMRIGHT", -20, 2)
-
-    listScrollBar = CreateFrame("EventFrame", nil, scrollContainer, "MinimalScrollBar")
-    listScrollBar:SetPoint("TOPLEFT", listScrollBox, "TOPRIGHT", 5, 0)
-    listScrollBar:SetPoint("BOTTOMLEFT", listScrollBox, "BOTTOMRIGHT", 5, 0)
-
-    listDataProvider = CreateDataProvider()
-    listDataProvider:SetSortComparator(function(a, b)
-        return a.createTime > b.createTime
-    end)
-
-    local listView = CreateScrollBoxListLinearView()
-    listView:SetElementFactory(function(factory, elementData)
-        factory("CraftsmanButtonTemplate", function(button, elementData)
-            elementData.playerFull = elementData.player .. "-" .. BFC.server
-            elementData.isFavorite = BFCConfig.favorites[elementData.playerFull]
-            button:UpdateText(elementData)
-            button:UpdateFavoriteButton()
-
-            button:SetScript("OnClick", function(button, buttonName, down)
-                if buttonName == "LeftButton" then
-                    BFC.ShowMessageFrame(elementData.player, elementData.playerFull)
-                end
-            end)
-        end)
-    end)
-    listView:SetPadding(PAD, PAD, PAD, PAD, SPACING)
-
-    ScrollUtil.InitScrollBoxListWithScrollBar(listScrollBox, listScrollBar, listView)
-    listScrollBox:SetDataProvider(listDataProvider)
-
-    ---------------------------------------------------------------------
-    -- search
-    ---------------------------------------------------------------------
-    searchScrollBox = CreateFrame("ScrollFrame", "BFC_SearchScrollFrame", scrollContainer, "WowScrollBoxList")
-    searchScrollBox:SetPoint("TOPLEFT")
-    searchScrollBox:SetPoint("BOTTOMRIGHT", -28, 2)
-    searchScrollBox:Hide()
-
-    searchScrollBar = CreateFrame("EventFrame", nil, scrollContainer, "MinimalScrollBar")
-    searchScrollBar:SetPoint("TOPLEFT", searchScrollBox, "TOPRIGHT", 5, 0)
-    searchScrollBar:SetPoint("BOTTOMLEFT", searchScrollBox, "BOTTOMRIGHT", 5, 0)
-    searchScrollBar:Hide()
-
-    searchDataProvider = CreateDataProvider()
-    searchDataProvider:SetSortComparator(function(a, b)
-        return a.createTime > b.createTime
-    end)
-
-    local searchView = CreateScrollBoxListLinearView()
-    searchView:SetElementFactory(function(factory, elementData)
-        factory("CraftsmanButtonTemplate", function(button, elementData)
-            elementData.playerFull = elementData.player .. "-" .. BFC.server
-            elementData.isFavorite = BFCConfig.favorites[elementData.playerFull]
-            button:UpdateText(elementData)
-            button:UpdateFavoriteButton()
-
-            button:SetScript("OnClick", function(button, buttonName, down)
-                if buttonName == "LeftButton" then
-                    BFC.ShowMessageFrame(elementData.player, elementData.playerFull)
-                end
-            end)
-        end)
-    end)
-    searchView:SetPadding(PAD, PAD, PAD, PAD, SPACING)
-
-    ScrollUtil.InitScrollBoxListWithScrollBar(searchScrollBox, searchScrollBar, searchView)
-    searchScrollBox:SetDataProvider(searchDataProvider)
-
-    ---------------------------------------------------------------------
     -- export
     ---------------------------------------------------------------------
     local exportButton = CreateFrame("Button", nil, craftsmanFrame, "UIPanelButtonTemplate")
-    exportButton:SetPoint("BOTTOMRIGHT", -10, 3)
+    exportButton:SetPoint("TOPRIGHT", -15, -65)
     exportButton:SetTextToFit("导出")
     exportButton:SetScript("OnClick", function()
         BFC.ShowExportFrame()
@@ -289,77 +350,6 @@ local function CreateCraftsmanFrame()
     importButton:SetScript("OnClick", function()
         BFC.ShowImportFrame()
     end)
-
-    updateTimeText:SetPoint("RIGHT", importButton, "LEFT", -10, 0)
-end
-
----------------------------------------------------------------------
--- CraftsmanButtonMixin
----------------------------------------------------------------------
-CraftsmanButtonMixin = {}
-
-function CraftsmanButtonMixin:OnLoad()
-    self.FavoriteButton:SetScript("OnEnter", function()
-        self:OnEnter()
-    end)
-
-    self.FavoriteButton:SetScript("OnLeave", function()
-        self:OnLeave()
-    end)
-
-    self.FavoriteButton:SetScript("OnClick", function()
-        self:GetData().isFavorite = not self:GetData().isFavorite
-        -- update BFCConfig.favorites
-        if self:GetData().isFavorite then
-            BFCConfig.favorites[self:GetData().playerFull] = true
-        else
-            BFCConfig.favorites[self:GetData().playerFull] = nil
-        end
-
-        -- update list
-        for index, elementData in listDataProvider:Enumerate() do
-            elementData.isFavorite = BFCConfig.favorites[elementData.playerFull]
-            local button = listView:FindFrame(elementData)
-            if button then
-                button:UpdateFavoriteButton()
-            end
-        end
-        for index, elementData in searchDataProvider:Enumerate() do
-            elementData.isFavorite = BFCConfig.favorites[elementData.playerFull]
-            local button = searchView:FindFrame(elementData)
-            if button then
-                button:UpdateFavoriteButton()
-            end
-        end
-    end)
-end
-
-function CraftsmanButtonMixin:OnEnter()
-    self.MouseoverOverlay:Show()
-    self.FavoriteButton.NormalTexture:Show()
-end
-
-function CraftsmanButtonMixin:OnLeave()
-    self.MouseoverOverlay:Hide()
-    if not self:GetData().isFavorite then
-        self.FavoriteButton.NormalTexture:Hide()
-    end
-end
-
-function CraftsmanButtonMixin:UpdateFavoriteButton()
-    local isFavorite = self:GetData().isFavorite
-    local currAtlas = isFavorite and "auctionhouse-icon-favorite" or "auctionhouse-icon-favorite-off"
-    self.FavoriteButton.NormalTexture:SetAtlas(currAtlas)
-    self.FavoriteButton.NormalTexture:SetShown(isFavorite)
-    self.FavoriteButton.HighlightTexture:SetAtlas(currAtlas)
-    self.FavoriteButton.HighlightTexture:SetAlpha(isFavorite and 0.2 or 0.4)
-end
-
-function CraftsmanButtonMixin:UpdateText(elementData)
-    self.TitleLabel:SetText(elementData.title)
-    self.PriceLabel:SetText(elementData.price .. "|A:Coin-Gold:0:0|a")
-    self.PlayerLabel:SetText(elementData.player)
-    self:UpdateFavoriteButton()
 end
 
 ---------------------------------------------------------------------
@@ -383,13 +373,14 @@ local function DoLoad()
         title = title,
         price = data.price,
         player = data.gameCharacterName,
+        server = data.serverName,
         createTime = data.createTime,
     }
 
     if isSearch then
-        searchDataProvider:Insert(elementData)
+        searchList.dataProvider:Insert(elementData)
     else
-        listDataProvider:Insert(elementData)
+        normalList.dataProvider:Insert(elementData)
     end
 
     -- update loding
@@ -405,9 +396,9 @@ local function PrepareData(text)
     local result = {}
 
     if not categoryFilter then
-        result = BFC.craftsman.data
+        result = BFCCraftsman.data
     else
-        for _, t in pairs(BFC.craftsman.data) do
+        for _, t in pairs(BFCCraftsman.data) do
             if categoryFilter[t.categoryName] then
                 tinsert(result, t)
             end
@@ -448,20 +439,20 @@ function LoadData(text)
     maskFrame.text:SetText("正在加载工匠数据……")
 
     if isSearch then
-        searchDataProvider:Flush()
+        searchList.dataProvider:Flush()
     else
-        listDataProvider:Flush()
+        normalList.dataProvider:Flush()
         listUpdateRequired = false
     end
 
-    if type(BFC.craftsman.data) ~= "table" or #BFC.craftsman.data == 0 then
+    if #BFCCraftsman.data == 0 then
         maskFrame.text:SetText("没有工匠数据……") -- TODO:
         topInfoText.Update()
         return
     end
 
     -- update time
-    updateTimeText:SetText("数据更新时间：" .. date("%Y/%m/%d %H:%M", BFC.craftsman.updateTime))
+    updateTimeText:SetText("数据更新时间：" .. date("%Y/%m/%d %H:%M", BFCCraftsman.updateTime))
 
     -- filter
     matchedResult = PrepareData(text)
@@ -515,5 +506,15 @@ function BFC.ShowCraftsmanFrame(item)
         searchBox:SetText(item)
         LoadData(item)
     end
+end
 
+---------------------------------------------------------------------
+-- reload
+---------------------------------------------------------------------
+function BFC.ReloadCraftsmanData()
+    isSearch = false
+    searchBox:SetText("")
+    categoryFilter = nil
+    categoryDropdown:OverrideText(ALL)
+    LoadData()
 end

@@ -9,6 +9,7 @@ local MESSAGE = "<" .. BFC.displayedName .. "> 你好，请问现在方便接单
 -- message frame
 ---------------------------------------------------------------------
 local messageFrame
+local editbox, checkStatusButton, statusTexture, statusText, sendButton
 
 local function CreateMessageFrame()
     messageFrame = CreateFrame("Frame", "BFC_MessageFrame", BFC_MainFrame, "SettingsFrameTemplate") -- PortraitFrameTemplate
@@ -38,14 +39,14 @@ local function CreateMessageFrame()
     messageFrame.NineSlice.Text:SetText("工匠")
 
     -- editbox
-    local editbox = CreateFrame("EditBox", nil, messageFrame, "InputBoxTemplate")
+    editbox = CreateFrame("EditBox", nil, messageFrame, "InputBoxTemplate")
     editbox:SetPoint("TOPLEFT", 20, -35)
     editbox:SetPoint("TOPRIGHT", -10, -35)
     editbox:SetHeight(25)
     editbox:SetAutoFocus(false)
 
     -- check status button
-    local checkStatusButton = CreateFrame("Button", nil, messageFrame, "UIPanelButtonTemplate")
+    checkStatusButton = CreateFrame("Button", nil, messageFrame, "UIPanelButtonTemplate")
     checkStatusButton:SetPoint("TOPLEFT", editbox, "BOTTOMLEFT", -7, -5)
     checkStatusButton:SetPoint("TOPRIGHT", editbox, "BOTTOMRIGHT", 0, -5)
     checkStatusButton:SetHeight(25)
@@ -64,19 +65,19 @@ local function CreateMessageFrame()
     end)
 
     -- status texture
-    local statusTexture = messageFrame:CreateTexture(nil, "ARTWORK")
+    statusTexture = messageFrame:CreateTexture(nil, "ARTWORK")
     statusTexture:SetPoint("TOPLEFT", checkStatusButton, "BOTTOMLEFT", 2, -7)
     statusTexture:SetPoint("TOPRIGHT", checkStatusButton, "BOTTOMRIGHT", -2, -7)
     statusTexture:SetColorTexture(0.25, 0.25, 0.25, 1)
     statusTexture:SetHeight(20)
 
     -- status text
-    local statusText = messageFrame:CreateFontString(nil, "OVERLAY", "BFC_FONT_WHITE")
+    statusText = messageFrame:CreateFontString(nil, "OVERLAY", "BFC_FONT_WHITE")
     statusText:SetPoint("LEFT", statusTexture)
     statusText:SetPoint("RIGHT", statusTexture)
 
     -- send whisper
-    local sendButton = CreateFrame("Button", nil, messageFrame, "UIPanelButtonTemplate")
+    sendButton = CreateFrame("Button", nil, messageFrame, "UIPanelButtonTemplate")
     sendButton:SetPoint("TOPLEFT", checkStatusButton, "BOTTOMLEFT", 0, -34)
     sendButton:SetPoint("TOPRIGHT", checkStatusButton, "BOTTOMRIGHT", 0, -34)
     sendButton:SetHeight(25)
@@ -119,6 +120,6 @@ function BFC.ShowMessageFrame(shortName, fullName)
     currentStatus = "unknown"
     messageFrame.shortName = shortName
     messageFrame.fullName = fullName
-    editbox:SetText(shortName)
+    editbox:SetText(fullName)
     UpdateStatus()
 end

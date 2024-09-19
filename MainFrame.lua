@@ -63,11 +63,3 @@ function BFC.ShowMainFrame()
     mainFrame:Show()
     BFC.ShowCraftsmanFrame()
 end
-
----------------------------------------------------------------------
--- slash
----------------------------------------------------------------------
-SLASH_BFCRAFTSMAN1 = "/bfc"
-SlashCmdList["BFCRAFTSMAN"] = function()
-    BFC.ShowMainFrame()
-end

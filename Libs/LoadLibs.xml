@@ -3,4 +3,5 @@
     <Script file="LibStub\LibStub.lua"/>
     <Include file="LibSerialize\lib.xml"/>
     <Include file="LibDeflate\lib.xml"/>
+    <Script file="LibRealmInfoCN\LibRealmInfoCN.lua"/>
 </Ui>

@@ -6,7 +6,7 @@ local LibDeflate = LibStub:GetLibrary("LibDeflate")
 local deflateConfig = {level = 9}
 
 local importExportFrame, confirmDialog
-local editboxContainer, scrollingEditBox, importButton
+local tipText, errorText, editboxContainer, scrollingEditBox, importButton
 local mode, exportedStr, importedData
 
 ---------------------------------------------------------------------
@@ -21,7 +21,9 @@ end
 ---------------------------------------------------------------------
 local function DoImport()
     if not importedData then return end
-
+    BFC.ProcessCraftsmanData(importedData.data, importedData.updateTime)
+    BFC.ReloadCraftsmanData()
+    importedData = nil
 end
 
 ---------------------------------------------------------------------
@@ -35,29 +37,39 @@ local function OnTextChanged()
 
     elseif mode == "import" then
         -- import
-        local type, data = string.match(scrollingEditBox.eb:GetText(), "^!BFC:(%u+)!(.+)$")
-        if type and data then
-            local success
-            data = LibDeflate:DecodeForPrint(data) -- decode
-            success, data = pcall(LibDeflate.DecompressDeflate, LibDeflate, data) -- decompress
-            success, data = Serializer:Deserialize(data) -- deserialize
+        local text = scrollingEditBox.eb:GetText()
+        if text ~= "" then
+            local type, data = string.match(scrollingEditBox.eb:GetText(), "^!BFC:(%u+)!(.+)$")
+            if type and data then
+                local success
+                data = LibDeflate:DecodeForPrint(data) -- decode
+                success, data = pcall(LibDeflate.DecompressDeflate, LibDeflate, data) -- decompress
+                success, data = Serializer:Deserialize(data) -- deserialize
 
-            if success and data then
-                -- BFCList = data
-                print("OK")
-                importedData = data
-                importButton:SetEnabled(true)
+                if success and data then
+                    importedData = data
+                    if data.updateTime >= BFCCraftsman.updateTime then
+                        importButton:SetEnabled(true)
+                        errorText:SetText("")
+                    else
+                        importedData = nil
+                        importButton:SetEnabled(false)
+                        errorText:SetText("无法导入过旧的数据")
+                    end
+                else
+                    importedData = nil
+                    importButton:SetEnabled(false)
+                    errorText:SetText("无法解析此字符串")
+                end
             else
-                -- TODO: failed
-                print("failed")
                 importedData = nil
                 importButton:SetEnabled(false)
+                errorText:SetText("无法解析此字符串")
             end
         else
-            -- TODO: error
-            print("error")
             importedData = nil
             importButton:SetEnabled(false)
+            errorText:SetText("")
         end
     end
 end
@@ -68,7 +80,7 @@ end
 local function CreateConfirmDialog()
     confirmDialog = CreateFrame("Frame", "BFC_ImportExportConfirm", importExportFrame, "PortraitFrameTemplate")
     confirmDialog:SetFrameLevel(BFC_MainFrame:GetFrameLevel() + 1500)
-    confirmDialog:SetSize(300, 200)
+    confirmDialog:SetSize(300, 140)
     confirmDialog:SetPoint("CENTER")
     ButtonFrameTemplate_HidePortrait(confirmDialog)
     confirmDialog:Hide()
@@ -81,6 +93,29 @@ local function CreateConfirmDialog()
         confirmDialog:Hide()
         BFC_MainFrameMask:SetFrameLevel(BFC_MainFrame:GetFrameLevel() + 200)
     end)
+
+    local message = confirmDialog:CreateFontString(nil, "OVERLAY", "BFC_FONT_WHITE")
+    message:SetPoint("TOPLEFT", 20, -50)
+    message:SetPoint("TOPRIGHT", -20, -50)
+    message:SetText("所有工匠数据将被覆盖！")
+    message:SetTextColor(1, 0, 0)
+
+    local yes = CreateFrame("Button", nil, confirmDialog, "UIPanelButtonTemplate")
+    yes:SetPoint("BOTTOMLEFT", 35, 20)
+    yes:SetWidth(100)
+    yes:SetText("确定")
+    yes:SetScript("OnClick", function()
+        DoImport()
+        importExportFrame:Hide()
+    end)
+
+    local no = CreateFrame("Button", nil, confirmDialog, "UIPanelButtonTemplate")
+    no:SetPoint("BOTTOMRIGHT", -30, 20)
+    no:SetWidth(100)
+    no:SetText("取消")
+    no:SetScript("OnClick", function()
+        confirmDialog:Hide()
+    end)
 end
 
 ---------------------------------------------------------------------
@@ -90,8 +125,8 @@ local function CreateImportExportFrame()
     importExportFrame = CreateFrame("Frame", "BFC_ImportExportFrame", BFC_MainFrame, "PortraitFrameTemplate")
     importExportFrame:SetFrameLevel(BFC_MainFrame:GetFrameLevel() + 300)
     importExportFrame:SetHeight(300)
-    importExportFrame:SetPoint("BOTTOMLEFT", 55, 50)
-    importExportFrame:SetPoint("BOTTOMRIGHT", -50, 50)
+    importExportFrame:SetPoint("TOPLEFT", 55, -100)
+    importExportFrame:SetPoint("TOPRIGHT", -50, -100)
     ButtonFrameTemplate_HidePortrait(importExportFrame)
     importExportFrame:Hide()
 
@@ -107,8 +142,18 @@ local function CreateImportExportFrame()
     editboxContainer = CreateFrame("Frame", nil, importExportFrame, "TooltipBackdropTemplate")
     editboxContainer:SetBackdropColor(0.2, 0.2, 0.2, 0.9)
     editboxContainer:SetBackdropBorderColor(0.9, 0.9, 0.9, 1)
-    editboxContainer:SetPoint("TOPLEFT", 30, -40)
+    editboxContainer:SetPoint("TOPLEFT", 30, -55)
     editboxContainer:SetPoint("BOTTOMRIGHT", -25, 40)
+
+    -- tip text
+    tipText = importExportFrame:CreateFontString(nil, "OVERLAY", "BFC_FONT_WHITE")
+    tipText:SetPoint("BOTTOMLEFT", editboxContainer, "TOPLEFT", 0, 5)
+    tipText:SetTextColor(1, 1, 0)
+
+    -- error text
+    errorText = importExportFrame:CreateFontString(nil, "OVERLAY", "BFC_FONT_WHITE")
+    errorText:SetPoint("BOTTOMRIGHT", editboxContainer, "TOPRIGHT", 0, 5)
+    errorText:SetTextColor(1, 0, 0)
 
     -- scrollingEditBox
     scrollingEditBox = CreateFrame("Frame", "BFC_ImportExportEditBox", editboxContainer, "ScrollingEditBoxTemplate")
@@ -159,11 +204,13 @@ function BFC.ShowExportFrame()
 
     mode = "export"
 
+    tipText:SetText("导出的数据仅包含当前（大）服务器")
+    errorText:SetText("")
     editboxContainer:SetPoint("BOTTOMRIGHT", -25, 20)
     importButton:Hide()
 
     -- export
-    exportedStr = Serializer:Serialize(BFC.craftsman) -- serialize
+    exportedStr = Serializer:Serialize({data=BFCCraftsman.data, updateTime=BFCCraftsman.updateTime}) -- serialize
     exportedStr = LibDeflate:CompressDeflate(exportedStr, deflateConfig) -- compress
     exportedStr = LibDeflate:EncodeForPrint(exportedStr) -- encode
     exportedStr = "!BFC:CRAFT!" .. exportedStr
@@ -185,6 +232,8 @@ function BFC.ShowImportFrame()
     mode = "import"
     importedData = nil
 
+    tipText:SetText("导入的数据仅保留当前（大）服务器")
+    errorText:SetText("")
     editboxContainer:SetPoint("BOTTOMRIGHT", -25, 40)
     scrollingEditBox:SetText("")
     importButton:SetEnabled(false)
