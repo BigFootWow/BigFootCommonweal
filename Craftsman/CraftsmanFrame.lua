@@ -58,75 +58,6 @@ local function CreateList(parent, name)
     return list
 end
 
----------------------------------------------------------------------
--- CraftsmanButtonMixin
----------------------------------------------------------------------
-CraftsmanButtonMixin = {}
-
-function CraftsmanButtonMixin:OnLoad()
-    self.FavoriteButton:SetScript("OnEnter", function()
-        self:OnEnter()
-    end)
-
-    self.FavoriteButton:SetScript("OnLeave", function()
-        self:OnLeave()
-    end)
-
-    self.FavoriteButton:SetScript("OnClick", function()
-        self:GetData().isFavorite = not self:GetData().isFavorite
-        -- update BFCCraftsman.favorites
-        if self:GetData().isFavorite then
-            BFCCraftsman.favorites[self:GetData().playerFull] = true
-        else
-            BFCCraftsman.favorites[self:GetData().playerFull] = nil
-        end
-
-        -- update list
-        for index, elementData in normalList.dataProvider:Enumerate() do
-            elementData.isFavorite = BFCCraftsman.favorites[elementData.playerFull]
-            local button = normalList.view:FindFrame(elementData)
-            if button then
-                button:UpdateFavoriteButton()
-            end
-        end
-        for index, elementData in searchList.dataProvider:Enumerate() do
-            elementData.isFavorite = BFCCraftsman.favorites[elementData.playerFull]
-            local button = searchList.view:FindFrame(elementData)
-            if button then
-                button:UpdateFavoriteButton()
-            end
-        end
-    end)
-end
-
-function CraftsmanButtonMixin:OnEnter()
-    self.MouseoverOverlay:Show()
-    self.FavoriteButton.NormalTexture:Show()
-end
-
-function CraftsmanButtonMixin:OnLeave()
-    self.MouseoverOverlay:Hide()
-    if not self:GetData().isFavorite then
-        self.FavoriteButton.NormalTexture:Hide()
-    end
-end
-
-function CraftsmanButtonMixin:UpdateFavoriteButton()
-    local isFavorite = self:GetData().isFavorite
-    local currAtlas = isFavorite and "auctionhouse-icon-favorite" or "auctionhouse-icon-favorite-off"
-    self.FavoriteButton.NormalTexture:SetAtlas(currAtlas)
-    self.FavoriteButton.NormalTexture:SetShown(isFavorite)
-    self.FavoriteButton.HighlightTexture:SetAtlas(currAtlas)
-    self.FavoriteButton.HighlightTexture:SetAlpha(isFavorite and 0.2 or 0.4)
-end
-
-function CraftsmanButtonMixin:UpdateText(elementData)
-    self.TitleLabel:SetText(elementData.title)
-    self.PriceLabel:SetText(elementData.price .. "|A:Coin-Gold:0:0|a")
-    self.PlayerLabel:SetText(elementData.player)
-    self:UpdateFavoriteButton()
-end
-
 
 
 
@@ -350,6 +281,75 @@ local function CreateCraftsmanFrame()
     importButton:SetScript("OnClick", function()
         BFC.ShowImportFrame()
     end)
+end
+
+---------------------------------------------------------------------
+-- CraftsmanButtonMixin
+---------------------------------------------------------------------
+CraftsmanButtonMixin = {}
+
+function CraftsmanButtonMixin:OnLoad()
+    self.FavoriteButton:SetScript("OnEnter", function()
+        self:OnEnter()
+    end)
+
+    self.FavoriteButton:SetScript("OnLeave", function()
+        self:OnLeave()
+    end)
+
+    self.FavoriteButton:SetScript("OnClick", function()
+        self:GetData().isFavorite = not self:GetData().isFavorite
+        -- update BFCCraftsman.favorites
+        if self:GetData().isFavorite then
+            BFCCraftsman.favorites[self:GetData().playerFull] = true
+        else
+            BFCCraftsman.favorites[self:GetData().playerFull] = nil
+        end
+
+        -- update list
+        for index, elementData in normalList.dataProvider:Enumerate() do
+            elementData.isFavorite = BFCCraftsman.favorites[elementData.playerFull]
+            local button = normalList.view:FindFrame(elementData)
+            if button then
+                button:UpdateFavoriteButton()
+            end
+        end
+        for index, elementData in searchList.dataProvider:Enumerate() do
+            elementData.isFavorite = BFCCraftsman.favorites[elementData.playerFull]
+            local button = searchList.view:FindFrame(elementData)
+            if button then
+                button:UpdateFavoriteButton()
+            end
+        end
+    end)
+end
+
+function CraftsmanButtonMixin:OnEnter()
+    self.MouseoverOverlay:Show()
+    self.FavoriteButton.NormalTexture:Show()
+end
+
+function CraftsmanButtonMixin:OnLeave()
+    self.MouseoverOverlay:Hide()
+    if not self:GetData().isFavorite then
+        self.FavoriteButton.NormalTexture:Hide()
+    end
+end
+
+function CraftsmanButtonMixin:UpdateFavoriteButton()
+    local isFavorite = self:GetData().isFavorite
+    local currAtlas = isFavorite and "auctionhouse-icon-favorite" or "auctionhouse-icon-favorite-off"
+    self.FavoriteButton.NormalTexture:SetAtlas(currAtlas)
+    self.FavoriteButton.NormalTexture:SetShown(isFavorite)
+    self.FavoriteButton.HighlightTexture:SetAtlas(currAtlas)
+    self.FavoriteButton.HighlightTexture:SetAlpha(isFavorite and 0.2 or 0.4)
+end
+
+function CraftsmanButtonMixin:UpdateText(elementData)
+    self.TitleLabel:SetText(elementData.title)
+    self.PriceLabel:SetText(elementData.price .. "|A:Coin-Gold:0:0|a")
+    self.PlayerLabel:SetText(elementData.player)
+    self:UpdateFavoriteButton()
 end
 
 ---------------------------------------------------------------------
