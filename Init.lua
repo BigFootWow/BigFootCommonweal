@@ -23,7 +23,7 @@ font:SetShadowOffset(1, -1)
 ---------------------------------------------------------------------
 local LRI = LibStub("LibRealmInfoCN")
 function BFC.ProcessCraftsmanData(data, updateTime, force)
-    if (BFCCraftsman.updateTime and BFCCraftsman.updateTime < updateTime) or force then
+    if (BFCCraftsman.updateTime and BFCCraftsman.updateTime <= updateTime) or force then
         BFCCraftsman.updateTime = updateTime
         wipe(BFCCraftsman.data)
 
