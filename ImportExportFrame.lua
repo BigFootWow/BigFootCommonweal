@@ -47,10 +47,22 @@ local function OnTextChanged()
                 success, data = Serializer:Deserialize(data) -- deserialize
 
                 if success and data then
-                    importedData = data
                     if data.updateTime >= BFCCraftsman.updateTime then
-                        importButton:SetEnabled(true)
-                        errorText:SetText("")
+                        if data.serverName then
+                            if BFC.LRI.IsConnectedRealm(data.serverName) then
+                                importedData = data
+                                importButton:SetEnabled(true)
+                                errorText:SetText("")
+                            else
+                                importedData = nil
+                                importButton:SetEnabled(false)
+                                errorText:SetText("无法导入其他（大）服务器的数据")
+                            end
+                        else
+                            importedData = data
+                            importButton:SetEnabled(true)
+                            errorText:SetText("")
+                        end
                     else
                         importedData = nil
                         importButton:SetEnabled(false)
@@ -210,7 +222,7 @@ function BFC.ShowExportFrame()
     importButton:Hide()
 
     -- export
-    exportedStr = Serializer:Serialize({data=BFCCraftsman.data, updateTime=BFCCraftsman.updateTime}) -- serialize
+    exportedStr = Serializer:Serialize({data=BFCCraftsman.data, updateTime=BFCCraftsman.updateTime, serverName=GetNormalizedRealmName()}) -- serialize
     exportedStr = LibDeflate:CompressDeflate(exportedStr, deflateConfig) -- compress
     exportedStr = LibDeflate:EncodeForPrint(exportedStr) -- encode
     exportedStr = "!BFC:CRAFT!" .. exportedStr

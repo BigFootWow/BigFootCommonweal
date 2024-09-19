@@ -21,7 +21,7 @@ font:SetShadowOffset(1, -1)
 ---------------------------------------------------------------------
 -- process data
 ---------------------------------------------------------------------
-local LRI = LibStub("LibRealmInfoCN")
+BFC.LRI = LibStub("LibRealmInfoCN")
 function BFC.ProcessCraftsmanData(data, updateTime, force)
     if (BFCCraftsman.updateTime and BFCCraftsman.updateTime <= updateTime) or force then
         BFCCraftsman.updateTime = updateTime
@@ -30,7 +30,7 @@ function BFC.ProcessCraftsmanData(data, updateTime, force)
         if type(data) == "table" then
             -- print("BEFORE", #data)
             for _, t in pairs(data) do
-                if LRI.IsConnectedRealm(t.serverName)
+                if BFC.LRI.IsConnectedRealm(t.serverName)
                 and t.gameCharacterName and t.gameCharacterName ~= ""
                 and t.createTime then
                     tinsert(BFCCraftsman.data, t)

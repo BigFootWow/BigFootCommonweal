@@ -446,6 +446,8 @@ function LoadData(text)
     end
 
     if #BFCCraftsman.data == 0 then
+        searchEntries = 0
+        listEntries = 0
         maskFrame.text:SetText("没有工匠数据……") -- TODO:
         topInfoText.Update()
         return
@@ -513,6 +515,8 @@ end
 ---------------------------------------------------------------------
 function BFC.ReloadCraftsmanData()
     isSearch = false
+    searchEntries = 0
+    listEntries = 0
     searchBox:SetText("")
     categoryFilter = nil
     categoryDropdown:OverrideText(ALL)
