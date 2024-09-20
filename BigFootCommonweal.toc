@@ -5,6 +5,8 @@
 ## Version: r1
 ## SavedVariables: BFCConfig, BFCCraftsman
 
+## X-Curse-Project-ID: 1105954
+
 Libs\LoadLibs.xml
 
 Init.lua

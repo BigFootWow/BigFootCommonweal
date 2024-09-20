@@ -1,0 +1,25 @@
+*This addon is for the CN region only*
+
+# **大脚公益助手**
+
+目前支持的功能：寻找工匠  
+计划中的功能：联合NGA公益区，计划追加免费CD相关功能  
+问题反馈与建议：在KOOK的“**[大脚官方社区](https://kook.top/P7D1R1)**”内的“插件-[大脚公益助手](https://kook.top/tEdVGT)”频道（https://kook.top/tEdVGT）
+
+&nbsp;
+
+## 关于“寻找工匠”功能
+
+插件内仅展示玩家所在（大）服务器的相关数据  
+数据来自[魔兽工坊](https://wow.miaoyanai.com/?ref=bigfoot)
+
+### 数据更新方式
+
+- 使用大脚客户端自动更新（WIP）
+- 访问[魔兽工坊](https://wow.miaoyanai.com/?ref=bigfoot)，复制玩家所在服务器的数据，在插件端内手动导入
+
+### 导入与导出
+
+- 支持从网页端/其他用户导出的字符串导入数据
+- 导入导出的数据仅保留玩家当前服务器
+- 若数据量过大（超过1万条），则客户端可能未响应，可能需要等待几十秒至若干分钟
