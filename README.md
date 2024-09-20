@@ -4,7 +4,7 @@
 
 目前支持的功能：寻找工匠  
 计划中的功能：联合NGA公益区，计划追加免费CD相关功能  
-问题反馈与建议：在KOOK的“**[大脚官方社区](https://kook.top/P7D1R1)**”内的“插件-[大脚公益助手](https://kook.top/tEdVGT)”频道（https://kook.top/tEdVGT）
+问题反馈与建议：在KOOK的 **[大脚官方社区](https://kook.top/P7D1R1)** 内的 **插件-大脚公益助手** 频道（<https://kook.top/tEdVGT>）
 
 &nbsp;
 
