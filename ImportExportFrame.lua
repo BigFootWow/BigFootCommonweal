@@ -43,26 +43,23 @@ local function OnTextChanged()
             if type and data then
                 local success
                 data = LibDeflate:DecodeForPrint(data) -- decode
+                -- print("LibDeflate.DecodeForPrint:", data)
                 success, data = pcall(LibDeflate.DecompressDeflate, LibDeflate, data) -- decompress
+                -- print("LibDeflate.DecompressDeflate:", success, data)
                 success, data = Serializer:Deserialize(data) -- deserialize
+                -- print("LibSerialize.Deserialize:", success, data)
 
                 if success and data then
                     if data.updateTime >= BFCCraftsman.updateTime then
                         if data.serverName then
                             if BFC.LRI.IsConnectedRealm(data.serverName) then
-                                importedData = data
-                                importButton:SetEnabled(true)
                                 errorText:SetText("")
                             else
-                                importedData = nil
-                                importButton:SetEnabled(false)
-                                errorText:SetText("无法导入其他（大）服务器的数据")
+                                errorText:SetText("准备导入的数据不包含当前（大）服务器")
                             end
-                        else
-                            importedData = data
-                            importButton:SetEnabled(true)
-                            errorText:SetText("")
                         end
+                        importedData = data
+                        importButton:SetEnabled(true)
                     else
                         importedData = nil
                         importButton:SetEnabled(false)
@@ -137,8 +134,8 @@ local function CreateImportExportFrame()
     importExportFrame = CreateFrame("Frame", "BFC_ImportExportFrame", BFC_MainFrame, "PortraitFrameTemplate")
     importExportFrame:SetFrameLevel(BFC_MainFrame:GetFrameLevel() + 300)
     importExportFrame:SetHeight(300)
-    importExportFrame:SetPoint("TOPLEFT", 55, -100)
-    importExportFrame:SetPoint("TOPRIGHT", -50, -100)
+    importExportFrame:SetPoint("TOPLEFT", 55, -70)
+    importExportFrame:SetPoint("TOPRIGHT", -50, -70)
     ButtonFrameTemplate_HidePortrait(importExportFrame)
     importExportFrame:Hide()
 

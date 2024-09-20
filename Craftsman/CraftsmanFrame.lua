@@ -4,6 +4,7 @@ local BFC = select(2, ...)
 local PAD = 2
 local SPACING = 2
 local ATTIC_HEIGHT = 90
+local URL = "https://wow.miaoyanai.com/?ref=bigfoot"
 
 ---------------------------------------------------------------------
 -- comparator
@@ -115,7 +116,20 @@ local function CreateCraftsmanFrame()
     linkEditbox:SetPoint("RIGHT", updateTimeText, "LEFT", -10, 0)
     linkEditbox:SetHeight(20)
     linkEditbox:SetTextColor(0.6, 0.6, 0.6, 1)
-    linkEditbox:SetText("https://wow.miaoyanai.com/?ref=bigfoot")
+    linkEditbox:SetText(URL)
+    linkEditbox:SetCursorPosition(0)
+    linkEditbox:SetAutoFocus(false)
+    linkEditbox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+    linkEditbox:SetScript("OnMouseUp", function(self) self:HighlightText() end)
+    linkEditbox:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
+    linkEditbox:SetScript("OnEditFocusLost", function(self) self:HighlightText(0, 0) end)
+    linkEditbox:SetScript("OnTextChanged", function(self, userChanged)
+        if userChanged then
+            self:SetText(URL)
+            self:HighlightText()
+            self:SetCursorPosition(0)
+        end
+    end)
 
     ---------------------------------------------------------------------
     -- frame container

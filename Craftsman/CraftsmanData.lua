@@ -1,7 +1,7 @@
 local _,BFC =...
 
 BFC.craftsman = {
-  updateTime = 1726731450,
+  updateTime = 1726731440,
   data = {
   {
     createTime = 1725640469,

@@ -12,7 +12,7 @@ ButtonFrameTemplate_HidePortrait(mainFrame)
 mainFrame.Inset:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 11, -11)
 -- FrameTemplate_SetAtticHeight(mainFrame, ATTIC_HEIGHT)
 -- FrameTemplate_SetButtonBarHeight(mainFrame, 100)
-mainFrame:SetSize(600, 400)
+mainFrame:SetSize(750, 400)
 mainFrame:SetPoint("CENTER")
 mainFrame:EnableMouse(true)
 mainFrame:SetMovable(true)
@@ -30,7 +30,7 @@ mainFrame:SetTitle(BFC.displayedName)
 mainFrame:SetResizable(true)
 mainFrame.resizeButton = CreateFrame("Button", nil, mainFrame, "PanelResizeButtonTemplate")
 mainFrame.resizeButton:SetPoint("BOTTOMRIGHT")
-mainFrame.resizeButton:Init(mainFrame, 600, 400, 1200, 800)
+mainFrame.resizeButton:Init(mainFrame, 750, 400, 1600, 900)
 
 -- ESC
 tinsert(UISpecialFrames, "BFC_MainFrame")
@@ -55,6 +55,13 @@ maskFrame:SetBackdropColor(0.1, 0.1, 0.1, 0.9)
 maskFrame:SetPoint("TOPLEFT", 5, -20)
 maskFrame:SetPoint("BOTTOMRIGHT", -2, 2)
 maskFrame:Hide()
+
+maskFrame:SetScript("OnShow", function()
+    mainFrame.resizeButton:SetEnabled(false)
+end)
+maskFrame:SetScript("OnHide", function()
+    mainFrame.resizeButton:SetEnabled(true)
+end)
 
 ---------------------------------------------------------------------
 -- show
