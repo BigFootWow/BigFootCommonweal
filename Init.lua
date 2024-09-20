@@ -19,6 +19,21 @@ font:SetShadowColor(0, 0, 0, 1)
 font:SetShadowOffset(1, -1)
 
 ---------------------------------------------------------------------
+-- minimap icon
+---------------------------------------------------------------------
+local icon = LibStub("LibDBIcon-1.0")
+local ldb = LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("BFC_LDB", {
+    type = "launcher",
+	icon = "Interface\\AddOns\\BigFootCommonweal\\bfc_icon.tga",
+	OnClick = function(clickedframe, button)
+        BFC.ToggleMainFrame()
+	end,
+    OnTooltipShow = function(self)
+        self:AddLine(BFC.displayedName)
+    end,
+})
+
+---------------------------------------------------------------------
 -- process data
 ---------------------------------------------------------------------
 BFC.LRI = LibStub("LibRealmInfoCN")
@@ -58,6 +73,14 @@ end)
 function eventFrame.ADDON_LOADED(name)
     if name == BFC.name then
         if type(BFCConfig) ~= "table" then BFCConfig = {} end
+
+        if type(BFCConfig.minimap) ~= "table" then
+            BFCConfig.minimap = {
+                hide = false,
+            }
+        end
+        icon:Register(BFC.name, ldb, BFCConfig.minimap)
+
         if type(BFCCraftsman) ~= "table" then
             BFCCraftsman = {
                 updateTime = 0,

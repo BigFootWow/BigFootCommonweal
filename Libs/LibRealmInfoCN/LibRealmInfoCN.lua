@@ -1,5 +1,7 @@
 ---------------------------------------------------------------------
--- LibRealmInfoCN (based on LibGetRealmInfo by Phanx)
+-- LibRealmInfoCN
+-- https://github.com/enderneko/LibRealmInfoCN
+-- based on LibGetRealmInfo by Phanx
 ---------------------------------------------------------------------
 local MAJOR, MINOR = "LibRealmInfoCN", 1
 assert(LibStub, MAJOR .. " requires LibStub.")

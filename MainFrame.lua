@@ -70,3 +70,12 @@ function BFC.ShowMainFrame()
     mainFrame:Show()
     BFC.ShowCraftsmanFrame()
 end
+
+function BFC.ToggleMainFrame()
+    if mainFrame:IsShown() then
+        mainFrame:Hide()
+    else
+        mainFrame:Show()
+        BFC.ShowCraftsmanFrame()
+    end
+end
