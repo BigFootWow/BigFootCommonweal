@@ -1,14 +1,12 @@
 ---@class BFC
 local BFC = select(2, ...)
+_G.BFC = BFC
 
 ---------------------------------------------------------------------
 -- vars
 ---------------------------------------------------------------------
 BFC.name = ...
 BFC.displayedName = "大脚公益助手"
-BFC.count_total = 0
-BFC.count_server = 0
-BFC.count_matched = 0
 
 ---------------------------------------------------------------------
 -- font
@@ -37,26 +35,71 @@ local ldb = LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("BFC_LDB", {
 -- process data
 ---------------------------------------------------------------------
 BFC.LRI = LibStub("LibRealmInfoCN")
-function BFC.ProcessCraftsmanData(data, updateTime, force)
-    if (BFCCraftsman.updateTime and BFCCraftsman.updateTime <= updateTime) or force then
-        BFCCraftsman.updateTime = updateTime
-        wipe(BFCCraftsman.data)
+BFC.loadedCraftsman = {
+    updateTime = 0,
+    data = {},
+}
 
-        if type(data) == "table" then
-            -- print("BEFORE", #data)
-            for _, t in pairs(data) do
-                if BFC.LRI.IsConnectedRealm(t.serverName)
-                and t.gameCharacterName and t.gameCharacterName ~= ""
-                and t.createTime then
-                    tinsert(BFCCraftsman.data, t)
-                end
+local function LoadData()
+    wipe(BFC.loadedCraftsman.data)
+    local serverUpdateTime = 0
+    for server, t in pairs(BFCCraftsman.data) do
+        if BFC.LRI.IsConnectedRealm(server) then
+            serverUpdateTime = max(serverUpdateTime, t.updateTime)
+            for _, c in pairs(t.list) do
+                tinsert(BFC.loadedCraftsman.data, c)
             end
-            -- print("AFTER", #BFCCraftsman.data)
         end
     end
+    BFC.loadedCraftsman.count_total = #BFC.craftsman.data
+    BFC.loadedCraftsman.count_server = #BFC.loadedCraftsman.data
+    BFC.loadedCraftsman.updateTime = max(BFCCraftsman.localUpdateTime, serverUpdateTime)
+end
 
-    BFC.count_server = #BFCCraftsman.data
-    BFC.count_total = max(#BFC.craftsman.data, BFC.count_server)
+local function IsValid(t)
+    return t.serverName and t.serverName ~= ""
+        and t.gameCharacterName and t.gameCharacterName ~= ""
+        and t.title and t.createTime and t.categoryName
+end
+
+function BFC.ProcessLocalCraftsmanData()
+    if not BFC.craftsman then return end
+    if BFC.craftsman.updateTime > BFCCraftsman.localUpdateTime then
+        BFCCraftsman.localUpdateTime = BFC.craftsman.updateTime -- overall updateTime
+        wipe(BFCCraftsman.data)
+
+        for _, t in pairs(BFC.craftsman.data) do
+            if IsValid(t) then
+                if not BFCCraftsman.data[t.serverName] then
+                    BFCCraftsman.data[t.serverName] = {
+                        updateTime = BFC.craftsman.updateTime, -- server updateTime
+                        list = {}, -- server data
+                    }
+                end
+                tinsert(BFCCraftsman.data[t.serverName].list, t)
+            end
+        end
+
+        print("|cffffff00[" .. BFC.displayedName .. "]|r 工匠数据已更新 |cffababab" .. date("%Y/%m/%d %H:%M", BFCCraftsman.localUpdateTime) .. "|r")
+    end
+    LoadData()
+end
+
+function BFC.ProcessImportedCraftsmanData(data, updateTime)
+    local processed = {}
+
+    for _, t in pairs(data) do
+        if not processed[t.serverName] then
+            processed[t.serverName] = true
+            -- overwrite old
+            BFCCraftsman.data[t.serverName] = {
+                updateTime = updateTime, -- server updateTime
+                list = {}, -- server data
+            }
+        end
+        tinsert(BFCCraftsman.data[t.serverName].list, t)
+    end
+    LoadData()
 end
 
 ---------------------------------------------------------------------
@@ -83,8 +126,13 @@ function eventFrame.ADDON_LOADED(name)
 
         if type(BFCCraftsman) ~= "table" then
             BFCCraftsman = {
-                updateTime = 0,
-                data = {},
+                localUpdateTime = 0,
+                data = {
+                    -- (serverName) = {
+                    --     updateTime = 0,
+                    --     list = {},
+                    -- },
+                },
                 favorites = {},
             }
         end
@@ -114,7 +162,7 @@ end
 
 function eventFrame:PLAYER_LOGIN()
     -- BFC.server = GetNormalizedRealmName()
-    BFC.ProcessCraftsmanData(BFC.craftsman.data, BFC.craftsman.updateTime)
+    BFC.ProcessLocalCraftsmanData()
 end
 
 ---------------------------------------------------------------------

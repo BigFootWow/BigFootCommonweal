@@ -91,7 +91,7 @@ local function CreateCraftsmanFrame()
     topInfoText:SetPoint("TOPLEFT", 15, -70)
 
     function topInfoText.Update()
-        topInfoText:SetFormattedText("总计：%d    本服：%d    列出的条目：%d", BFC.count_total, BFC.count_server, isSearch and searchEntries or listEntries)
+        topInfoText:SetFormattedText("总计：%d    本服：%d    列出的条目：%d", BFC.loadedCraftsman.count_total, BFC.loadedCraftsman.count_server, isSearch and searchEntries or listEntries)
     end
 
     ---------------------------------------------------------------------
@@ -421,9 +421,9 @@ local function PrepareData(text)
     local result = {}
 
     if not categoryFilter then
-        result = BFCCraftsman.data
+        result = BFC.loadedCraftsman.data
     else
-        for _, t in pairs(BFCCraftsman.data) do
+        for _, t in pairs(BFC.loadedCraftsman.data) do
             if categoryFilter[t.categoryName] then
                 tinsert(result, t)
             end
@@ -470,7 +470,7 @@ function LoadData(text)
         listUpdateRequired = false
     end
 
-    if #BFCCraftsman.data == 0 then
+    if #BFC.loadedCraftsman.data == 0 then
         searchEntries = 0
         listEntries = 0
         maskFrame.text:SetText("没有工匠数据……") -- TODO:
@@ -479,7 +479,7 @@ function LoadData(text)
     end
 
     -- update time
-    updateTimeText:SetText("数据更新时间：" .. date("%Y/%m/%d %H:%M", BFCCraftsman.updateTime))
+    updateTimeText:SetText("数据更新时间：" .. date("%Y/%m/%d %H:%M", BFC.loadedCraftsman.updateTime))
 
     -- filter
     matchedResult = PrepareData(text)

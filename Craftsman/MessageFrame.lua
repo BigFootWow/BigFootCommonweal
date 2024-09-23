@@ -3,7 +3,7 @@ local BFC = select(2, ...)
 
 local UpdateStatus
 local currentStatus = "unknown"
-local MESSAGE = "<" .. BFC.displayedName .. "> 你好，请问现在方便接单么？"
+local MESSAGE = "<" .. BFC.displayedName .. "> 你好，我在魔兽工坊看到了你的工匠信息，请问现在方便制作装备么？"
 
 ---------------------------------------------------------------------
 -- message frame

@@ -21,7 +21,7 @@ end
 ---------------------------------------------------------------------
 local function DoImport()
     if not importedData then return end
-    BFC.ProcessCraftsmanData(importedData.data, importedData.updateTime)
+    BFC.ProcessImportedCraftsmanData(importedData.data, importedData.updateTime)
     BFC.ReloadCraftsmanData()
     importedData = nil
 end
@@ -29,7 +29,7 @@ end
 ---------------------------------------------------------------------
 -- OnTextChanged
 ---------------------------------------------------------------------
-local function OnTextChanged()
+local function OnTextChanged(_, _, userChanged)
     if mode == "export" then
         -- refill text
         scrollingEditBox:SetText(exportedStr)
@@ -37,33 +37,34 @@ local function OnTextChanged()
 
     elseif mode == "import" then
         -- import
-        local text = scrollingEditBox.eb:GetText()
-        if text ~= "" then
-            local type, data = string.match(scrollingEditBox.eb:GetText(), "^!BFC:(%u+)!(.+)$")
-            if type and data then
-                local success
-                data = LibDeflate:DecodeForPrint(data) -- decode
-                -- print("LibDeflate.DecodeForPrint:", data)
-                success, data = pcall(LibDeflate.DecompressDeflate, LibDeflate, data) -- decompress
-                -- print("LibDeflate.DecompressDeflate:", success, data)
-                success, data = Serializer:Deserialize(data) -- deserialize
-                -- print("LibSerialize.Deserialize:", success, data)
+        if userChanged then
+            local text = scrollingEditBox.eb:GetText()
+            if text ~= "" then
+                local type, data = string.match(scrollingEditBox.eb:GetText(), "^!BFC:(%u+)!(.+)$")
+                if type and data then
+                    local success
+                    data = LibDeflate:DecodeForPrint(data) -- decode
+                    -- print("LibDeflate.DecodeForPrint:", data)
+                    success, data = pcall(LibDeflate.DecompressDeflate, LibDeflate, data) -- decompress
+                    -- print("LibDeflate.DecompressDeflate:", success, data)
+                    success, data = Serializer:Deserialize(data) -- deserialize
+                    -- print("LibSerialize.Deserialize:", success, data)
 
-                if success and data then
-                    if data.updateTime >= BFCCraftsman.updateTime then
-                        if data.serverName then
-                            if BFC.LRI.IsConnectedRealm(data.serverName) then
-                                errorText:SetText("")
-                            else
-                                errorText:SetText("准备导入的数据不包含当前（大）服务器")
-                            end
+                    if success and data then
+                        if data.updateTime >= BFCCraftsman.localUpdateTime then
+                            importedData = data
+                            importButton:SetEnabled(true)
+                            errorText:SetText("")
+                            -- texplore(importedData)
+                        else
+                            importedData = nil
+                            importButton:SetEnabled(false)
+                            errorText:SetText("无法导入过旧的数据")
                         end
-                        importedData = data
-                        importButton:SetEnabled(true)
                     else
                         importedData = nil
                         importButton:SetEnabled(false)
-                        errorText:SetText("无法导入过旧的数据")
+                        errorText:SetText("无法解析此字符串")
                     end
                 else
                     importedData = nil
@@ -73,12 +74,8 @@ local function OnTextChanged()
             else
                 importedData = nil
                 importButton:SetEnabled(false)
-                errorText:SetText("无法解析此字符串")
+                errorText:SetText("")
             end
-        else
-            importedData = nil
-            importButton:SetEnabled(false)
-            errorText:SetText("")
         end
     end
 end
@@ -104,6 +101,7 @@ local function CreateConfirmDialog()
     end)
 
     local message = confirmDialog:CreateFontString(nil, "OVERLAY", "BFC_FONT_WHITE")
+    confirmDialog.message = message
     message:SetPoint("TOPLEFT", 20, -50)
     message:SetPoint("TOPRIGHT", -20, -50)
     message:SetText("所有工匠数据将被覆盖！")
@@ -218,8 +216,26 @@ function BFC.ShowExportFrame()
     editboxContainer:SetPoint("BOTTOMRIGHT", -25, 20)
     importButton:Hide()
 
+    -- local testData = {
+    --     updateTime = 1725650000,
+    --     data = {
+    --         {
+    --             createTime = 1725657561,
+    --             title = "619装等[永铸防御者] 稳5星 3星材料1星公函，下单：篠崎",
+    --             categoryName = "盾牌",
+    --             itemName = "永铸防御者",
+    --             itemLevel = 619,
+    --             price = 6666,
+    --             sort = 0,
+    --             serverName = "影之哀伤",
+    --             gameCharacterName = "篠崎"
+    --         },
+    --     }
+    -- }
+    -- exportedStr = Serializer:Serialize(testData) -- serialize
+
     -- export
-    exportedStr = Serializer:Serialize({data=BFCCraftsman.data, updateTime=BFCCraftsman.updateTime, serverName=GetNormalizedRealmName()}) -- serialize
+    exportedStr = Serializer:Serialize(BFC.loadedCraftsman) -- serialize
     exportedStr = LibDeflate:CompressDeflate(exportedStr, deflateConfig) -- compress
     exportedStr = LibDeflate:EncodeForPrint(exportedStr) -- encode
     exportedStr = "!BFC:CRAFT!" .. exportedStr
