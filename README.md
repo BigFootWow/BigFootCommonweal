@@ -13,9 +13,16 @@
 
 # **大脚公益助手**
 
+<font color="orange">本插件由[**大脚**](https://bigfoot.178.com/)开发</font>
+
 目前支持的功能：寻找工匠  
 计划中的功能：联合NGA公益区，计划追加免费CD相关功能  
-问题反馈与建议：在KOOK的“**[大脚官方社区](https://kook.top/P7D1R1)**”内的“插件-[大脚公益助手](https://kook.top/tEdVGT)”频道（https://kook.top/tEdVGT）
+问题反馈与建议：在KOOK的“**[大脚官方社区](https://kook.top/P7D1R1)**”内的“插件-[大脚公益助手](https://kook.top/tEdVGT)”频道（<https://kook.top/tEdVGT>）
+
+## 斜杠命令
+
+- /bfc：打开大脚公益助手主界面（小地图上也有按钮可以快速打开）
+- /bfc reset：重置大脚公益助手（包括导入的数据与收藏）
 
 ## 关于“寻找工匠”功能
 
