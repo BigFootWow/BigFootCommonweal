@@ -5,6 +5,12 @@ local PAD = 2
 local SPACING = 2
 local ATTIC_HEIGHT = 90
 local URL = "https://wow.miaoyanai.com/?ref=bigfoot"
+local DAY = 24 * 60 * 60
+local EXPIRED_THRESHOLD = 3 * 24 * 60 * 60
+local DATA_EXPIRED = "|cffff0000工匠数据已过期%d天|r\n\n你可以通过以下几种方式更新数据：\n"
+    .. "1. |cffffff00大脚客户端（每次启动会自动更新）|r\n    插件库 - 大脚发布 - 大脚公益助手 - 更新数据 - 重载界面\n"
+    .. "2. |cffffff00魔兽工坊网站|r\n    复制工匠数据字符串 - 插件内导入\n"
+    .. "3. 其他玩家分享的字符串"
 
 ---------------------------------------------------------------------
 -- comparator
@@ -77,7 +83,7 @@ local LoadData
 -- create craftsman frame
 ---------------------------------------------------------------------
 local craftsmanFrame
-local categoryDropdown, searchBox, topInfoText, updateTimeText, maskFrame
+local categoryDropdown, searchBox, topInfoText, updateTimeText, maskFrame, tipsFrame
 local normalList, searchList
 
 local function CreateCraftsmanFrame()
@@ -306,6 +312,37 @@ local function CreateCraftsmanFrame()
     importButton:SetScript("OnClick", function()
         BFC.ShowImportFrame()
     end)
+
+    ---------------------------------------------------------------------
+    -- data timeliness
+    ---------------------------------------------------------------------
+    tipsFrame = CreateFrame("Frame", nil, craftsmanFrame, "TooltipBackdropTemplate")
+    tipsFrame:SetPoint("BOTTOMRIGHT", craftsmanFrame, "BOTTOMRIGHT", -15, 30)
+    tipsFrame:SetSize(450, 10)
+    tipsFrame:SetFrameLevel(craftsmanFrame:GetFrameLevel() + 150)
+    tipsFrame:EnableMouse(true)
+    tipsFrame.NineSlice.Center:SetTexture("interface/buttons/white8x8")
+    tipsFrame:SetBackdropColor(0.125, 0.1, 0.1, 0.95)
+    tipsFrame:Hide()
+
+    tipsFrame.closeBtn = CreateFrame("Button", nil, tipsFrame, "UIPanelButtonTemplate") -- UIPanelCloseButton
+    tipsFrame.closeBtn:SetPoint("BOTTOMLEFT", 10, 10)
+    tipsFrame.closeBtn:SetPoint("BOTTOMRIGHT", -10, 10)
+    tipsFrame.closeBtn:SetText("好的")
+    tipsFrame.closeBtn:SetScript("OnClick", function()
+        tipsFrame:Hide()
+    end)
+
+    tipsFrame.text = tipsFrame:CreateFontString(nil, "OVERLAY", "BFC_FONT_WHITE")
+    tipsFrame.text:SetPoint("TOPLEFT", 10, -10)
+    -- tipsFrame.text:SetPoint("TOPRIGHT", -10, -10)
+    tipsFrame.text:SetJustifyH("LEFT")
+    tipsFrame.text:SetSpacing(5)
+
+    tipsFrame:SetScript("OnShow", function()
+        tipsFrame:SetHeight(tipsFrame.text:GetHeight() + 50)
+        tipsFrame:SetWidth(tipsFrame.text:GetWidth() + 20)
+    end)
 end
 
 ---------------------------------------------------------------------
@@ -525,6 +562,13 @@ function BFC.ShowCraftsmanFrame(item)
         if not item then
             listUpdateRequired = true
             LoadData()
+        end
+
+        if time() - BFC.loadedCraftsman.updateTime >= EXPIRED_THRESHOLD then
+            tipsFrame.text:SetFormattedText(DATA_EXPIRED, (time() - BFC.loadedCraftsman.updateTime) / DAY)
+            tipsFrame:Show()
+        else
+            tipsFrame:Hide()
         end
     end
 
