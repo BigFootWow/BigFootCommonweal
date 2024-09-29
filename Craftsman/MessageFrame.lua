@@ -17,7 +17,7 @@ local function CreateMessageFrame()
     messageFrame:Hide()
 
     -- base
-    messageFrame:SetSize(200, 170)
+    messageFrame:SetSize(200, 160)
     messageFrame:SetPoint("TOPLEFT", BFC_MainFrame, "TOPRIGHT", 5, 0)
     messageFrame:EnableMouse(true)
 
