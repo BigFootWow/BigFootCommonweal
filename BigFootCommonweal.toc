@@ -2,7 +2,7 @@
 ## Title: BigFootCommonweal
 ## Title-zhCN: [大脚]公益助手
 ## Author: enderneko(bigfoot)
-## Version: r4
+## Version: r5
 ## SavedVariables: BFCConfig, BFCCraftsman
 
 ## X-Curse-Project-ID: 1105954
