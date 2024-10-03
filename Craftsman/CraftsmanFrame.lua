@@ -13,6 +13,21 @@ local DATA_EXPIRED = "|cffff0000工匠数据已过期%d天|r\n\n你可以通过�
     .. "3. 其他玩家分享的字符串"
 
 ---------------------------------------------------------------------
+-- craftsman frame
+---------------------------------------------------------------------
+local isSearch = false
+local listUpdateRequired = true
+local listEntries, searchEntries = 0, 0
+local listSelected, searchSelected
+local categoryFilter, matchedResult
+
+local craftsmanFrame
+local categoryDropdown, searchBox, topInfoText, updateTimeText, maskFrame, tipsFrame
+local normalList, searchList
+
+local LoadData
+
+---------------------------------------------------------------------
 -- comparator
 ---------------------------------------------------------------------
 local function SortComparator(a, b)
@@ -25,6 +40,20 @@ end
 ---------------------------------------------------------------------
 -- factory
 ---------------------------------------------------------------------
+
+local function SetSelected(index, selected)
+    if not index then return end
+    local old, found
+    if isSearch then
+        found = searchList.view:FindFrame(index)
+    else
+        found = normalList.view:FindFrame(index)
+    end
+    if found then
+        found.SelectedHighlight:SetShown(selected)
+    end
+end
+
 local function ElementFactory(factory, elementData)
     factory("CraftsmanButtonTemplate", function(button, elementData)
         elementData.playerFull = elementData.player .. "-" .. elementData.server
@@ -32,8 +61,22 @@ local function ElementFactory(factory, elementData)
         button:UpdateText(elementData)
         button:UpdateFavoriteButton()
 
+        if isSearch then
+            SetSelected(elementData, searchSelected == elementData)
+        else
+            SetSelected(elementData, listSelected == elementData)
+        end
+
         button:SetScript("OnClick", function(button, buttonName, down)
             if buttonName == "LeftButton" then
+                if isSearch then
+                    SetSelected(searchSelected, false)
+                    searchSelected = elementData
+                else
+                    SetSelected(listSelected, false)
+                    listSelected = elementData
+                end
+                SetSelected(elementData, true)
                 BFC.ShowMessageFrame(elementData.player, elementData.playerFull)
             end
         end)
@@ -56,8 +99,8 @@ local function CreateList(parent, name)
     list.dataProvider:SetSortComparator(SortComparator)
 
     list.view = CreateScrollBoxListLinearView()
-    list.view :SetElementFactory(ElementFactory)
-    list.view :SetPadding(PAD, PAD, PAD, PAD, SPACING)
+    list.view:SetElementFactory(ElementFactory)
+    list.view:SetPadding(PAD, PAD, PAD, PAD, SPACING)
 
     ScrollUtil.InitScrollBoxListWithScrollBar(list, list.scrollBar, list.view)
     list:SetDataProvider(list.dataProvider)
@@ -65,27 +108,9 @@ local function CreateList(parent, name)
     return list
 end
 
-
-
-
-
----------------------------------------------------------------------
--- craftsman frame
----------------------------------------------------------------------
-local isSearch = false
-local listUpdateRequired = true
-local listEntries, searchEntries = 0, 0
-local categoryFilter, matchedResult
-
-local LoadData
-
 ---------------------------------------------------------------------
 -- create craftsman frame
 ---------------------------------------------------------------------
-local craftsmanFrame
-local categoryDropdown, searchBox, topInfoText, updateTimeText, maskFrame, tipsFrame
-local normalList, searchList
-
 local function CreateCraftsmanFrame()
     craftsmanFrame = CreateFrame("Frame", "BFC_CraftsmanFrame", BFC_MainFrame)
     craftsmanFrame:SetAllPoints()
@@ -263,6 +288,8 @@ local function CreateCraftsmanFrame()
     searchBox:SetScript("OnTextChanged", function(self, userChanged)
         SearchBoxTemplate_OnTextChanged(self)
 
+        BFC.HideMessageFrame()
+
         local text = searchBox:GetText()
         if string.len(text) == 0 then
             isSearch = false
@@ -388,7 +415,9 @@ end
 
 function CraftsmanButtonMixin:OnEnter()
     self.MouseoverOverlay:Show()
-    self.FavoriteButton.NormalTexture:Show()
+    if not self:GetData().isFavorite then
+        self.FavoriteButton.NormalTexture:Show()
+    end
 end
 
 function CraftsmanButtonMixin:OnLeave()
@@ -486,6 +515,8 @@ local function PrepareData(text)
 end
 
 function LoadData(text)
+    BFC.HideMessageFrame()
+
     if ticker then
         ticker:Cancel()
         ticker = nil

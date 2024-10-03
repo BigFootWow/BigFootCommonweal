@@ -8,6 +8,7 @@
                 <Texture>
                     <Color r="0.1" g="0.1" b="0.1" a="1"/>
                 </Texture>
+                <Texture parentKey="SelectedHighlight" atlas="auctionhouse-ui-row-select" alphaMode="ADD" hidden="true"/>
                 <Texture parentKey="MouseoverOverlay" hidden="true" alphaMode="ADD">
                     <Color r="0.1" g="0.1" b="0.1" a="1"/>
                 </Texture>

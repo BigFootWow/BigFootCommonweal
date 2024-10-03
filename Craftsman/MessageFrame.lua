@@ -123,3 +123,10 @@ function BFC.ShowMessageFrame(shortName, fullName)
     editbox:SetText(fullName)
     UpdateStatus()
 end
+
+function BFC.HideMessageFrame()
+    if not messageFrame then return end
+    messageFrame.shortName = nil
+    messageFrame.fullName = nil
+    messageFrame:Hide()
+end
