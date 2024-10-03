@@ -1,3 +1,8 @@
+[![version](https://img.shields.io/github/v/release/BigFootWow/BigFootCommonweal)](https://github.com/BigFootWow/BigFootCommonweal/releases)
+[![Curseforge](https://img.shields.io/curseforge/dt/1105954?label=CurseForge&color=F16436)](https://www.curseforge.com/wow/addons/bigfootcommonweal)  
+[![BigFoot](https://img.shields.io/badge/大脚官方网站-ff5f00)](https://bigfoot.178.com)
+[![KOOK](https://img.shields.io/badge/大脚公益助手反馈（KOOK）-7ed705)](https://kook.top/tEdVGT)
+
 # **BigFootCommonweal**
 
 *This addon is for the CN region only*
