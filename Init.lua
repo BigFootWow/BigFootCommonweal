@@ -139,6 +139,8 @@ function eventFrame.ADDON_LOADED(name)
             }
         end
 
+        BFC_MainFrame:SetTitle(BFC.displayedName .. " |cffababab" .. C_AddOns.GetAddOnMetadata(BFC.name, "Version"))
+
     elseif name == "Blizzard_ProfessionsCustomerOrders" then
         eventFrame:UnregisterEvent("ADDON_LOADED")
         -- order browsing

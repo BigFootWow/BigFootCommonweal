@@ -24,7 +24,7 @@ mainFrame.titleBar:SetPoint("TOPLEFT")
 mainFrame.titleBar:SetPoint("TOPRIGHT")
 mainFrame.titleBar:SetHeight(32)
 mainFrame.titleBar:Init(mainFrame)
-mainFrame:SetTitle(BFC.displayedName)
+-- mainFrame:SetTitle(BFC.displayedName)
 
 -- resize
 mainFrame:SetResizable(true)
