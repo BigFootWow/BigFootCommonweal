@@ -89,15 +89,17 @@ function BFC.ProcessImportedCraftsmanData(data, updateTime)
     local processed = {}
 
     for _, t in pairs(data) do
-        if not processed[t.serverName] then
-            processed[t.serverName] = true
-            -- overwrite old
-            BFCCraftsman.data[t.serverName] = {
-                updateTime = updateTime, -- server updateTime
-                list = {}, -- server data
-            }
+        if IsValid(t) then
+            if not processed[t.serverName] then
+                processed[t.serverName] = true
+                -- overwrite old
+                BFCCraftsman.data[t.serverName] = {
+                    updateTime = updateTime, -- server updateTime
+                    list = {}, -- server data
+                }
+            end
+            tinsert(BFCCraftsman.data[t.serverName].list, t)
         end
-        tinsert(BFCCraftsman.data[t.serverName].list, t)
     end
     LoadData()
 end
