@@ -63,6 +63,7 @@ local function IsValid(t)
     return t.serverName and t.serverName ~= ""
         and t.gameCharacterName and t.gameCharacterName ~= ""
         and t.title and t.createTime and t.categoryName
+        and type(t.createTime) == "number"
 end
 
 function BFC.ProcessLocalCraftsmanData()
