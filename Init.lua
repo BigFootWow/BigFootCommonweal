@@ -92,14 +92,11 @@ end
 function BFC.ProcessImportedCraftsmanData(data, updateTime)
     local processed = {}
 
-    -- local total, valid, wrong = 0, 0, 0
+    -- local total, valid = 0, 0
     for _, t in pairs(data) do
         -- total = total + 1
         if IsValid(t) then
             -- valid = valid + 1
-            -- if type(t.createTime) ~= "number" then
-            --     wrong = wrong + 1
-            -- end
             if not processed[t.serverName] then
                 processed[t.serverName] = true
                 -- overwrite old
@@ -111,7 +108,7 @@ function BFC.ProcessImportedCraftsmanData(data, updateTime)
             tinsert(BFCCraftsman.data[t.serverName].list, t)
         end
     end
-    -- print("Total:"..total..", Valid:"..valid..", IncorrectCT:"..wrong)
+    -- print("Total:"..total..", Valid:"..valid)
     LoadData()
 end
 
