@@ -7,6 +7,7 @@ local ATTIC_HEIGHT = 90
 local URL = "https://wow.miaoyanai.com/?ref=bigfoot"
 local DAY = 24 * 60 * 60
 local EXPIRED_THRESHOLD = 3 * 24 * 60 * 60
+local MAX_ENTRIES = 99
 local DATA_EXPIRED = "|cffff0000工匠数据已过期%d天|r\n\n你可以通过以下几种方式更新数据：\n"
     .. "1. |cffffff00大脚客户端（每次启动会自动更新）|r\n    插件库 - 大脚发布 - 大脚公益助手 - 更新数据 - 重载界面\n"
     .. "2. |cffffff00魔兽工坊网站|r\n    复制工匠数据字符串 - 插件内导入\n"
@@ -552,10 +553,10 @@ function LoadData(text)
     -- filter
     matchedResult = PrepareData(text)
     if isSearch then
-        searchEntries = min(#matchedResult, 500)
+        searchEntries = min(#matchedResult, MAX_ENTRIES)
         entries = searchEntries
     else
-        listEntries = min(#matchedResult, 500)
+        listEntries = min(#matchedResult, MAX_ENTRIES)
         entries = listEntries
     end
     topInfoText.Update()

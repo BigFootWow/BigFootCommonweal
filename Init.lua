@@ -51,9 +51,12 @@ local function LoadData()
             end
         end
     end
-    BFC.loadedCraftsman.count_total = #BFC.craftsman.data
+    BFC.loadedCraftsman.count_total = BFC.loadedCraftsman.count_total or #BFC.craftsman.data
     BFC.loadedCraftsman.count_server = #BFC.loadedCraftsman.data
     BFC.loadedCraftsman.updateTime = max(BFCCraftsman.localUpdateTime, serverUpdateTime)
+
+    BFC.craftsman = nil
+    collectgarbage()
 end
 
 local function IsValid(t)
