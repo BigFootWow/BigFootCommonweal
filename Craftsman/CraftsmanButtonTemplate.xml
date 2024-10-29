@@ -14,13 +14,13 @@
                 </Texture>
             </Layer>
             <Layer level="OVERLAY">
-                <FontString parentKey="PlayerLabel" inherits="GameFontHighlightSmall" justifyH="RIGHT">
-                    <Size x="120"/>
+                <FontString parentKey="PlayerLabel" inherits="GameFontHighlightSmall" wordwrap="false" justifyH="RIGHT">
+                    <Size x="140"/>
                     <Anchors>
                         <Anchor point="RIGHT" x="-25"/>
                     </Anchors>
                 </FontString>
-                <FontString parentKey="PriceLabel" inherits="GameFontHighlightSmall" justifyH="RIGHT">
+                <FontString parentKey="PriceLabel" inherits="GameFontHighlightSmall" wordwrap="false" justifyH="RIGHT">
                     <Size x="80"/>
                     <Anchors>
                         <Anchor point="RIGHT" relativeKey="$parent.PlayerLabel" relativePoint="LEFT" x="-5"/>

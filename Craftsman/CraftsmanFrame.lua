@@ -32,10 +32,13 @@ local LoadData
 -- comparator
 ---------------------------------------------------------------------
 local function SortComparator(a, b)
-    if a.isFavorite ~= b.isFavorite then
-        return a.isFavorite
+    if a.isFavorite and not b.isFavorite then
+        return true
+    elseif not a.isFavorite and b.isFavorite then
+        return false
+    else
+        return a.index < b.index
     end
-    return a.createTime > b.createTime
 end
 
 ---------------------------------------------------------------------
@@ -57,8 +60,13 @@ end
 
 local function ElementFactory(factory, elementData)
     factory("CraftsmanButtonTemplate", function(button, elementData)
-        elementData.playerFull = elementData.player .. "-" .. elementData.server
-        elementData.isFavorite = BFCCraftsman.favorites[elementData.playerFull]
+        --! NOTE: only invoked on shown buttons
+        -- elementData.playerFull = elementData.player .. "-" .. elementData.server
+        -- if BFCCraftsman.favorites[elementData.playerFull] then
+        --     elementData.isFavorite = true
+        -- else
+        --     elementData.isFavorite = false
+        -- end
         button:UpdateText(elementData)
         button:UpdateFavoriteButton()
 
@@ -97,7 +105,7 @@ local function CreateList(parent, name)
     list.scrollBar:SetPoint("BOTTOMLEFT", list, "BOTTOMRIGHT", 5, 0)
 
     list.dataProvider = CreateDataProvider()
-    list.dataProvider:SetSortComparator(SortComparator)
+    -- list.dataProvider:SetSortComparator(SortComparator)
 
     list.view = CreateScrollBoxListLinearView()
     list.view:SetElementFactory(ElementFactory)
@@ -451,28 +459,13 @@ local ticker, timer
 local loaded = 0
 local entries
 
-local function DoLoad()
+local function DoLoad_Progressive()
     loaded = loaded + 1
 
-    local data = matchedResult[loaded]
-
-    -- title
-    local title = data.title:gsub("%[", "|cffffff00[")
-    title = title:gsub("%]", "]|r")
-
-    -- insert
-    local elementData = {
-        title = title,
-        price = data.price,
-        player = data.gameCharacterName,
-        server = data.serverName,
-        createTime = data.createTime,
-    }
-
     if isSearch then
-        searchList.dataProvider:Insert(elementData)
+        searchList.dataProvider:Insert(matchedResult[loaded])
     else
-        normalList.dataProvider:Insert(elementData)
+        normalList.dataProvider:Insert(matchedResult[loaded])
     end
 
     -- update loding
@@ -484,19 +477,38 @@ local function DoLoad()
     end
 end
 
+local function DoLoad_Instant()
+    for i = 1, MAX_ENTRIES do
+        t = matchedResult[i]
+        if not t then break end
+
+        if isSearch then
+            searchList.dataProvider:Insert(t)
+            -- searchList.dataProvider:Sort()
+        else
+            normalList.dataProvider:Insert(t)
+            -- normalList.dataProvider:Sort()
+        end
+    end
+
+    timer = C_Timer.After(0.25, maskFrame.FadeOut)
+end
+
 local function PrepareData(text)
     local result = {}
 
+    -- category
     if not categoryFilter then
-        result = BFC.loadedCraftsman.data
+        result = BFC.Copy(BFC.loadedCraftsman.data)
     else
         for _, t in pairs(BFC.loadedCraftsman.data) do
             if categoryFilter[t.categoryName] then
-                tinsert(result, t)
+                tinsert(result, BFC.Copy(t))
             end
         end
     end
 
+    -- search
     if text then
         local matched = {}
         for _, data in pairs(result) do
@@ -509,10 +521,34 @@ local function PrepareData(text)
                 tinsert(matched, data)
             end
         end
-        return matched
-    else
-        return result
+        result = matched
     end
+
+    -- complete data
+    for i, t in pairs(result) do
+        t.index = i
+
+        t.title = t.title:gsub("%[", "|cffffff00[")
+        t.title = t.title:gsub("%]", "]|r")
+
+        if strfind(t.gameCharacterName, "-") then
+            t.playerFull = t.gameCharacterName
+            t.player = strsplit("-", t.gameCharacterName)
+        else
+            t.playerFull = t.gameCharacterName .. "-" .. t.serverName
+            t.player = t.gameCharacterName
+        end
+
+        t.isFavorite = BFCCraftsman.favorites[t.playerFull]
+
+        t.gameCharacterName = nil
+        t.serverName = nil
+    end
+
+    -- sort
+    sort(result, SortComparator)
+
+    return result
 end
 
 function LoadData(text)
@@ -568,11 +604,12 @@ function LoadData(text)
     end
 
     loaded = 0
-    ticker = C_Timer.NewTicker(0, DoLoad, entries)
+    -- ticker = C_Timer.NewTicker(0, DoLoad_Progressive, entries)
+    DoLoad_Instant()
 
     -- local start = GetTimePreciseSec()
     -- for i = 1, n do
-    --     DoLoad()
+    --     DoLoad_Instant()
     -- end
     -- print("time cost:", GetTimePreciseSec() - start)
 end

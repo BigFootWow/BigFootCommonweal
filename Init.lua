@@ -9,6 +9,21 @@ BFC.name = ...
 BFC.displayedName = "大脚公益助手"
 
 ---------------------------------------------------------------------
+-- shared
+---------------------------------------------------------------------
+function BFC.Copy(t)
+    local newTbl = {}
+    for k, v in pairs(t) do
+        if type(v) == "table" then
+            newTbl[k] = BFC.Copy(v)
+        else
+            newTbl[k] = v
+        end
+    end
+    return newTbl
+end
+
+---------------------------------------------------------------------
 -- font
 ---------------------------------------------------------------------
 local font = CreateFont("BFC_FONT_WHITE")
@@ -45,6 +60,7 @@ local function LoadData()
     local serverUpdateTime = 0
     for server, t in pairs(BFCCraftsman.data) do
         if BFC.LRI.IsConnectedRealm(server) then
+        -- if server == "燃烧之刃" then
             serverUpdateTime = max(serverUpdateTime, t.updateTime)
             for _, c in pairs(t.list) do
                 tinsert(BFC.loadedCraftsman.data, c)
@@ -62,8 +78,7 @@ end
 local function IsValid(t)
     return t.serverName and t.serverName ~= ""
         and t.gameCharacterName and t.gameCharacterName ~= ""
-        and t.title and t.createTime and t.categoryName
-        and type(t.createTime) == "number"
+        and t.title and t.categoryName
 end
 
 function BFC.ProcessLocalCraftsmanData()

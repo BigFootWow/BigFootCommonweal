@@ -35,9 +35,11 @@ mainFrame.resizeButton:Init(mainFrame, 750, 400, 1600, 900)
 -- ESC
 tinsert(UISpecialFrames, "BFC_MainFrame")
 
--- mainFrame:SetScript("OnHide", function()
---     collectgarbage()
--- end)
+mainFrame:SetScript("OnHide", function()
+    if not InCombatLockdown() then
+        collectgarbage()
+    end
+end)
 
 ---------------------------------------------------------------------
 -- refresh
